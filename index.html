@@ -1,3 +1,12 @@
+Um die von dir gewünschte Funktionalität zu implementieren, nehmen wir folgende Änderungen im HTML und JavaScript-Code vor:
+
+1. Zu Beginn wird der Benutzer gefragt, ob er "Joshua" oder "Simon" ist.
+2. Die Datei wird direkt zu Beginn der Session erstellt und im Git-Repository im jeweiligen Ordner (`/Joshua` oder `/Simon`) abgelegt.
+3. Da das direkte Speichern in einem Git-Repository über den Browser nicht nativ unterstützt wird, müsstest du eine serverseitige Implementierung einbinden, beispielsweise mit einem Backend wie Node.js oder PHP. In dieser Version bereite ich den Code so vor, dass du ihn leicht erweitern kannst, um die Datei auf dem Server zu speichern.
+
+### Geänderter HTML- und JavaScript-Code:
+
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -14,7 +23,7 @@
             background-color: #121212;
             color: #ffffff;
         }
-        #sessionSelect, #exerciseForm {
+        #userSelect, #sessionSelect, #exerciseForm {
             display: none;
             margin-top: 20px;
             width: 100%;
@@ -58,16 +67,22 @@
             border-radius: 5px;
             overflow-y: auto;
             max-height: 200px;
-
-        #etrpop {
-        height: auto;
-        }
         }
     </style>
 </head>
 <body>
 
     <h1>GYM Tracker</h1>
+
+    <!-- User Selection -->
+    <div id="userSelect">
+        <h2>Wähle deinen Namen</h2>
+        <select id="userType">
+            <option value="joshua">Joshua</option>
+            <option value="simon">Simon</option>
+        </select>
+        <button id="selectUserBtn">Weiter</button>
+    </div>
 
     <!-- Start new session -->
     <button id="newSessionBtn">Neue Session starten</button>
@@ -113,12 +128,21 @@
     <script>
         let sessionData = ''; // String to store session data
         let sessionFile;
+        let userName = '';
 
         const exercises = {
             push: ["Bankdrücken", "Schrägbankdrücken KH", "Schulterdrücken KH", "Trizeps Skyllcrusher rechts", "Trizeps Skyllcrusher links", "Schulter heben Schrägbank", "Butterfly", "Trizeps drücken hinter Kopf", "Schulter heben stehen", "Trizeps drücken kabelzug einzeln", "Trizeps drücken stange"],
             pull: ["Bizeps curls", "Hammer curls", "Latzug", "Row", "frei Bizeps am kabel rechts", "frei Bizeps am kabel links", "Row Kabel rechts", "Row Kabel links", "Row enger Griff", "Überzüge Kabelturm", "Rear delt"],
             leg: ["Kniebeugen", "Beinpresse", "Ausfallschritte", "Beinbeuger"]
         };
+
+        // User Selection
+        document.getElementById('userSelect').style.display = 'block';
+        document.getElementById('selectUserBtn').addEventListener('click', () => {
+            userName = document.getElementById('userType').value;
+            document.getElementById('userSelect').style.display = 'none';
+            document.getElementById('newSessionBtn').style.display = 'block';
+        });
 
         // Start a new session
         document.getElementById('newSessionBtn').addEventListener('click', () => {
@@ -130,13 +154,13 @@
         document.getElementById('startSessionBtn').addEventListener('click', () => {
             const sessionType = document.getElementById('sessionType').value;
             const date = new Date().toISOString().split('T')[0];
-            sessionFile = `${sessionType}_${date}.txt`;
+            sessionFile = `${userName}/${sessionType}_${date}.txt`;
 
             document.getElementById('sessionSelect').style.display = 'none';
             document.getElementById('exerciseForm').style.display = 'block';
 
             // Start session with header
-            sessionData += `Session Type: ${sessionType}\nDate: ${date}\n\n`;
+            sessionData += `User: ${userName}\nSession Type: ${sessionType}\nDate: ${date}\n\n`;
 
             // Populate exercises based on session type
             const exerciseDropdown = document.getElementById('exercise');
@@ -147,6 +171,9 @@
                 option.textContent = exercise;
                 exerciseDropdown.appendChild(option);
             });
+
+            // Create and save the session file on server
+            saveSessionFile(sessionFile, sessionData);
 
             // Clear history
             document.getElementById('historyList').innerHTML = '';
@@ -177,7 +204,7 @@
             document.getElementById('notes').value = ''; // Clear notes
         });
 
-        // End the session and save the file
+        // End the session and download the file
         document.getElementById('endSessionBtn').addEventListener('click', () => {
             alert('Session beendet und gespeichert!');
 
@@ -191,9 +218,4 @@
             // Reset the session for the next time
             sessionData = ''; // Clear session data
             document.getElementById('exerciseForm').style.display = 'none';
-            document.getElementById('newSessionBtn').style.display = 'block';
-        });
-    </script>
-
-</body>
-</html>
+            document.getElementById('newSessionBtn').style
